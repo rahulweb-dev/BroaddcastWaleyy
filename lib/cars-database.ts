@@ -105,6 +105,9 @@ export interface CarData {
   segment: string
 }
 
+
+
+
 export const carsDatabase: CarData[] = [
   // MARUTI SUZUKI CARS
   {

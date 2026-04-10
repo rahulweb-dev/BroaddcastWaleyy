@@ -14,6 +14,15 @@ import {
   Users,
 } from 'lucide-react';
 import FindCarsSection from '@/components/FindCarsSection';
+import {
+  mostSearchedCars,
+  electricCars,
+  upcomingCars,
+  latestCars,
+  suvCars,
+  hatchbackCars,
+  sedanCars,
+} from '@/lib/car-sections';
 const heroSlides = [
   {
     id: 1,
@@ -28,7 +37,7 @@ const heroSlides = [
     title: 'Best Used Car Deals',
     subtitle: 'Certified pre-owned vehicles with warranty',
     image:
-      'https://media.cars24.com/india/cms/prod/banners/root/2026/04/02/0b3c8433-de0c-4f15-9681-652e167b31c0-homepage-desktop-banner-2.png',
+      '/no5qv9b_1808753.avif',
     category: 'Used Cars',
   },
   {
@@ -225,107 +234,39 @@ export function Hero() {
 }
 
 export function Searched() {
-  const mostSearchedCars = [
-    {
-      name: 'Tata Sierra',
-      price: '₹11.49 - 21.29 Lakh',
-      image: '/cars/tata-sierra.png',
-    },
-    {
-      name: 'Tata Punch',
-      price: '₹5.65 - 10.60 Lakh',
-      image: '/cars/tata-punch.png',
-    },
-    {
-      name: 'Toyota Fortuner',
-      price: '₹34.16 - 49.59 Lakh',
-      image: '/cars/fortuner.png',
-    },
-    {
-      name: 'Kia Seltos',
-      price: '₹10.99 - 19.99 Lakh',
-      image: '/cars/seltos.png',
-    },
-    {
-      name: 'Kia Seltos',
-      price: '₹10.99 - 19.99 Lakh',
-      image: '/cars/seltos.png',
-    },
-    {
-      name: 'Kia Seltos',
-      price: '₹10.99 - 19.99 Lakh',
-      image: '/cars/seltos.png',
-    },
-  ];
 
-  const electricCars = [
-    {
-      name: 'Maruti e Vitara',
-      price: '₹15.99 - 20.01 Lakh',
-      image: '/cars/ev1.png',
-    },
-    {
-      name: 'Mahindra BE 6',
-      price: '₹18.90 - 28.49 Lakh',
-      image: '/cars/ev2.png',
-    },
-    {
-      name: 'Tata Punch EV',
-      price: '₹9.69 - 12.59 Lakh',
-      image: '/cars/ev3.png',
-    },
-    {
-      name: 'Mahindra XEV 9e',
-      price: '₹21.90 - 31.25 Lakh',
-      image: '/cars/ev4.png',
-    },
-  ];
-
-  const upcomingCars = [
-    {
-      name: 'Tata Curvv',
-      price: 'Expected ₹12 - 20 Lakh',
-      image: '/cars/up1.png',
-    },
-    {
-      name: 'Hyundai Creta EV',
-      price: 'Expected ₹15 Lakh',
-      image: '/cars/up2.png',
-    },
-    {
-      name: 'Mahindra XUV 3XO EV',
-      price: 'Expected ₹14 Lakh',
-      image: '/cars/up3.png',
-    },
-  ];
-
-  const latestCars = [
-    {
-      name: 'Hyundai Verna',
-      price: '₹11.00 - 17.50 Lakh',
-      image: '/cars/latest1.png',
-    },
-    {
-      name: 'Honda Elevate',
-      price: '₹10.99 - 16.99 Lakh',
-      image: '/cars/latest2.png',
-    },
-    {
-      name: 'Maruti Fronx',
-      price: '₹7.50 - 13.04 Lakh',
-      image: '/cars/latest3.png',
-    },
-  ];
 
   return (
     <div className=''>
-      <CarSectionSlider title='Most Searched Cars' cars={mostSearchedCars} />
+      <CarSectionSlider
+        title='Most Searched Cars'
+        cars={mostSearchedCars}
+        type='popular'
+      />
 
-      <CarSectionSlider title='Electric Cars' cars={electricCars} />
+      <CarSectionSlider
+        title='Electric Cars'
+        cars={electricCars}
+        type='electric'
+      />
 
-      <CarSectionSlider title='Upcoming Cars' cars={upcomingCars} />
+      <CarSectionSlider title='SUV Cars' cars={suvCars} type='suv' />
 
-      <CarSectionSlider title='Latest Cars' cars={latestCars} />
+      <CarSectionSlider
+        title='Hatchback Cars'
+        cars={hatchbackCars}
+        type='hatchback'
+      />
+
+      <CarSectionSlider title='Sedan Cars' cars={sedanCars} type='sedan' />
+
+      <CarSectionSlider
+        title='Upcoming Cars'
+        cars={upcomingCars}
+        type='upcoming'
+      />
+
+      <CarSectionSlider title='Latest Cars' cars={latestCars} type='latest' />
     </div>
   );
 }

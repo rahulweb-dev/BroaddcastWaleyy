@@ -23,14 +23,15 @@ const saved = localStorage.getItem("city")
 
 if(saved){
 setCity(saved)
+window.__userCity = saved
 }
 
 },[])
 
-
 useEffect(()=>{
 
 localStorage.setItem("city",city)
+window.__userCity = city
 
 },[city])
 

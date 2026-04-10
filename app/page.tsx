@@ -22,7 +22,7 @@ export default function HomePage() {
       <CarVisualStories stories={visualStories} />
       <TestimonialsSection />
       <NewsSection />
-      <ContactPopup />
+      {/* <ContactPopup /> */}
     </div>
   );
 }
