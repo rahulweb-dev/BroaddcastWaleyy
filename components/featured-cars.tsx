@@ -1,184 +1,139 @@
-"use client"
+import Link from "next/link";
+import Image from "next/image";
+import { Badge } from "@/components/ui/badge";
+import { ChevronRight, Zap, Star } from "lucide-react";
+import prisma from "@/lib/prisma";
 
-import { useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Star, Fuel, Users, Settings, Heart, Eye } from "lucide-react"
-import Link from "next/link"
+async function getFeaturedVehicles() {
+  try {
+    const featured = await prisma.vehicle.findMany({
+      where: { status: "PUBLISHED", featured: true },
+      take: 8,
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+      include: {
+        brand: { select: { name: true, slug: true, logo: true } },
+        images: { orderBy: { sortOrder: "asc" }, take: 1 },
+        variants: {
+          where: { isDefault: true },
+          take: 1,
+          select: { fuelType: true, transmission: true, mileage: true, range: true },
+        },
+      },
+    });
 
-const featuredCars = [
-  {
-    id: 1,
-    name: "Hyundai Creta",
-    price: "₹10.87 - 18.73 Lakh",
-    rating: 4.5,
-    reviews: 1250,
-    image: "/placeholder.svg?height=200&width=300",
-    fuel: "Petrol/Diesel",
-    seating: "5 Seater",
-    transmission: "Manual/Automatic",
-    badge: "Popular",
-    badgeColor: "bg-red-500",
-  },
-  {
-    id: 2,
-    name: "Maruti Suzuki Swift",
-    price: "₹5.85 - 8.67 Lakh",
-    rating: 4.3,
-    reviews: 2100,
-    image: "/placeholder.svg?height=200&width=300",
-    fuel: "Petrol/CNG",
-    seating: "5 Seater",
-    transmission: "Manual/AMT",
-    badge: "Best Seller",
-    badgeColor: "bg-green-500",
-  },
-  {
-    id: 3,
-    name: "Tata Nexon",
-    price: "₹7.60 - 14.08 Lakh",
-    rating: 4.4,
-    reviews: 980,
-    image: "/placeholder.svg?height=200&width=300",
-    fuel: "Petrol/Diesel/Electric",
-    seating: "5 Seater",
-    transmission: "Manual/AMT",
-    badge: "Electric Available",
-    badgeColor: "bg-blue-500",
-  },
-  {
-    id: 4,
-    name: "Mahindra Thar",
-    price: "₹13.59 - 16.78 Lakh",
-    rating: 4.6,
-    reviews: 750,
-    image: "/placeholder.svg?height=200&width=300",
-    fuel: "Petrol/Diesel",
-    seating: "4 Seater",
-    transmission: "Manual/Automatic",
-    badge: "Adventure",
-    badgeColor: "bg-orange-500",
-  },
-]
+    if (featured.length > 0) return featured;
 
-export function FeaturedCars() {
-  const [hoveredCard, setHoveredCard] = useState<number | null>(null)
+    // Fallback: show any published vehicles
+    return prisma.vehicle.findMany({
+      where: { status: "PUBLISHED" },
+      take: 8,
+      orderBy: [{ isPopular: "desc" }, { createdAt: "desc" }],
+      include: {
+        brand: { select: { name: true, slug: true, logo: true } },
+        images: { orderBy: { sortOrder: "asc" }, take: 1 },
+        variants: {
+          where: { isDefault: true },
+          take: 1,
+          select: { fuelType: true, transmission: true, mileage: true, range: true },
+        },
+      },
+    });
+  } catch {
+    return [];
+  }
+}
+
+function typeToPath(type: string) {
+  if (type === "BIKE" || type === "SCOOTER") return "bikes";
+  if (type === "EV") return "ev";
+  if (type === "COMMERCIAL") return "commercial";
+  return "cars";
+}
+
+export async function FeaturedCars() {
+  const vehicles = await getFeaturedVehicles();
+  if (vehicles.length === 0) return null;
 
   return (
-    <section className="py-16 bg-white">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Featured Cars</h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Discover the most popular and trending cars chosen by thousands of customers
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredCars.map((car, index) => (
-            <Card
-              key={car.id}
-              className={`group cursor-pointer transition-all duration-300 hover:shadow-2xl border-0 bg-gradient-to-br from-white to-gray-50 ${
-                hoveredCard === car.id ? "transform scale-105" : ""
-              }`}
-              onMouseEnter={() => setHoveredCard(car.id)}
-              onMouseLeave={() => setHoveredCard(null)}
-              style={{
-                animationDelay: `${index * 100}ms`,
-              }}
-            >
-              <CardContent className="p-0">
-                <div className="relative overflow-hidden rounded-t-lg">
-                  <img
-                    src={car.image || "/placeholder.svg"}
-                    alt={car.name}
-                    className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
-                  />
-                  <Badge className={`absolute top-3 left-3 ${car.badgeColor} text-white border-0`}>{car.badge}</Badge>
-                  <div className="absolute top-3 right-3 flex space-x-2">
-                    <Button
-                      size="icon"
-                      variant="secondary"
-                      className="w-8 h-8 bg-white/80 backdrop-blur-sm hover:bg-white"
-                    >
-                      <Heart className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="secondary"
-                      className="w-8 h-8 bg-white/80 backdrop-blur-sm hover:bg-white"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-red-600 transition-colors">
-                    {car.name}
-                  </h3>
-
-                  <div className="flex items-center mb-3">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-4 h-4 ${
-                            i < Math.floor(car.rating) ? "text-yellow-400 fill-current" : "text-gray-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="ml-2 text-sm text-gray-600">
-                      {car.rating} ({car.reviews} reviews)
-                    </span>
-                  </div>
-
-                  <div className="space-y-2 mb-4 text-sm text-gray-600">
-                    <div className="flex items-center">
-                      <Fuel className="w-4 h-4 mr-2" />
-                      {car.fuel}
-                    </div>
-                    <div className="flex items-center">
-                      <Users className="w-4 h-4 mr-2" />
-                      {car.seating}
-                    </div>
-                    <div className="flex items-center">
-                      <Settings className="w-4 h-4 mr-2" />
-                      {car.transmission}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-lg font-bold text-gray-900">{car.price}</p>
-                      <p className="text-sm text-gray-500">Ex-showroom price</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 space-y-2">
-                    <Link href={`/cars/${car.id}`}>
-                      <Button className="w-full bg-red-600 hover:bg-red-700 text-white">View Details</Button>
-                    </Link>
-                    <Button variant="outline" className="w-full">
-                      Compare
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <div className="text-center mt-12">
-          <Link href="/cars">
-            <Button size="lg" variant="outline" className="px-8">
-              View All Cars
-            </Button>
+    <section className="py-12 bg-white">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <p className="text-blue-700 font-semibold text-xs uppercase tracking-widest mb-1">
+              Hand-Picked for You
+            </p>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Featured Vehicles</h2>
+          </div>
+          <Link
+            href="/cars"
+            className="hidden md:flex items-center gap-1 text-blue-700 font-semibold text-sm hover:gap-2 transition-all"
+          >
+            View All <ChevronRight className="w-4 h-4" />
           </Link>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {vehicles.map((v) => {
+            const img = v.images[0]?.url || "/placeholder.svg";
+            const variant = v.variants[0];
+            const href = `/${typeToPath(v.type)}/${v.brand.slug}/${v.slug}`;
+            const isEV = v.isElectric || v.type === "EV";
+
+            return (
+              <Link
+                key={v.id}
+                href={href}
+                className="group block rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 bg-white"
+              >
+                <div className="relative h-44 overflow-hidden bg-gray-50">
+                  <Image
+                    src={img} alt={v.name} fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
+                  <div className="absolute top-2 left-2 flex gap-1">
+                    {(v as any).featured && (
+                      <Badge className="bg-amber-400 text-amber-900 border-0 text-[10px]">
+                        <Star className="w-2.5 h-2.5 mr-0.5 fill-current" />Top Pick
+                      </Badge>
+                    )}
+                    {v.isNew && <Badge className="bg-emerald-500 text-white border-0 text-[10px]">New</Badge>}
+                    {isEV && <Badge className="bg-teal-500 text-white border-0 text-[10px]"><Zap className="w-2.5 h-2.5 mr-0.5" />EV</Badge>}
+                  </div>
+                </div>
+
+                <div className="p-4">
+                  <p className="text-xs text-gray-400 mb-0.5">{v.brand.name}</p>
+                  <h3 className="font-bold text-gray-900 text-sm group-hover:text-blue-700 transition-colors leading-tight mb-1">
+                    {v.name}
+                  </h3>
+                  <p className="text-base font-bold text-blue-700 mb-3">
+                    {v.priceDisplay || (v.priceMin ? `₹${v.priceMin} Lakh` : "Price TBD")}
+                  </p>
+                  <div className="flex gap-2 flex-wrap text-xs text-gray-500">
+                    {variant?.fuelType && (
+                      <span className="bg-slate-50 border border-gray-100 px-2 py-0.5 rounded-full">
+                        {variant.fuelType}
+                      </span>
+                    )}
+                    {variant?.transmission && (
+                      <span className="bg-slate-50 border border-gray-100 px-2 py-0.5 rounded-full">
+                        {variant.transmission}
+                      </span>
+                    )}
+                    {(variant?.mileage || variant?.range) && (
+                      <span className="bg-slate-50 border border-gray-100 px-2 py-0.5 rounded-full">
+                        {isEV ? variant.range : variant.mileage}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>
-  )
+  );
 }

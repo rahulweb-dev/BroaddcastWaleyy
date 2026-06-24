@@ -137,7 +137,7 @@ export default function OfferPopup({
 
         {/* Header */}
         <div className="mb-5">
-          <span className="bg-red-50 text-red-600 text-xs font-semibold px-3 py-1 rounded-full">
+          <span className="bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">
             Limited Offer
           </span>
 
@@ -159,7 +159,7 @@ export default function OfferPopup({
         {/* Location */}
         <div className="bg-gray-50 border rounded-xl p-3 mb-3">
           <div className="flex items-center gap-2 text-sm text-gray-500">
-            <MapPin size={14} className="text-red-600" />
+            <MapPin size={14} className="text-blue-600" />
             Your City
           </div>
 
@@ -181,7 +181,7 @@ export default function OfferPopup({
         <div className="mb-3">
           <div className="bg-gray-50 border rounded-xl p-3">
             <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Phone size={14} className="text-red-600" />
+              <Phone size={14} className="text-blue-600" />
               Mobile Number
             </div>
 
@@ -205,7 +205,7 @@ export default function OfferPopup({
         <div className="mb-4">
           <div className="bg-gray-50 border rounded-xl p-3">
             <div className="flex items-center gap-2 text-sm text-gray-500">
-              <User size={14} className="text-red-600" />
+              <User size={14} className="text-blue-600" />
               Full Name
             </div>
 
@@ -222,7 +222,7 @@ export default function OfferPopup({
         {/* Submit */}
         <button
           onClick={handleSubmit}
-          className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-semibold"
+          className="w-full bg-blue-700 hover:bg-blue-800 text-white py-3 rounded-xl font-semibold transition-colors"
         >
           Get Offers
         </button>

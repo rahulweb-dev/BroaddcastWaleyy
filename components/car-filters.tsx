@@ -1,201 +1,173 @@
-"use client"
+"use client";
 
-import { X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { Slider } from "@/components/ui/slider"
-import { brands, bodyTypes, fuelTypes, transmissionTypes, segments } from "@/lib/cars-database"
-import type { FilterState } from "@/app/cars/page"
+import { useState, useEffect } from "react";
+import { X, ChevronDown, ChevronUp } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Badge } from "@/components/ui/badge";
+import type { FilterState } from "@/types/filters";
+
+const BODY_TYPES = ["SUV", "Sedan", "Hatchback", "MUV", "Crossover", "Convertible", "Pickup", "Van"];
+const FUEL_TYPES = ["Petrol", "Diesel", "CNG", "Electric", "Hybrid", "Mild Hybrid"];
+const TRANSMISSIONS = ["Manual", "Automatic", "CVT", "AMT", "DCT", "IMT"];
 
 interface CarFiltersProps {
-  filters: FilterState
-  setFilters: (filters: FilterState) => void
+  filters: FilterState;
+  setFilters: (filters: FilterState) => void;
 }
 
+function Section({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full py-3 text-sm font-semibold text-gray-800 hover:text-gray-900"
+      >
+        {title}
+        {open ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+      </button>
+      {open && <div className="mt-1">{children}</div>}
+    </div>
+  );
+}
+
+const safeArr = (v: any): string[] => (Array.isArray(v) ? v : []);
+
 export function CarFilters({ filters, setFilters }: CarFiltersProps) {
-  const handleBrandChange = (brand: string, checked: boolean) => {
-    const newBrands = checked ? [...filters.selectedBrands, brand] : filters.selectedBrands.filter((b) => b !== brand)
-    setFilters({ ...filters, selectedBrands: newBrands })
-  }
+  const [brands, setBrands] = useState<Array<{ id: string; name: string; slug: string; _count: { vehicles: number } }>>([]);
 
-  const handleFuelTypeChange = (fuel: string, checked: boolean) => {
-    const newFuelTypes = checked
-      ? [...filters.selectedFuelTypes, fuel]
-      : filters.selectedFuelTypes.filter((f) => f !== fuel)
-    setFilters({ ...filters, selectedFuelTypes: newFuelTypes })
-  }
+  useEffect(() => {
+    fetch("/api/brands?limit=100")
+      .then((r) => r.json())
+      .then((d) => setBrands(d.brands || []))
+      .catch(() => setBrands([]));
+  }, []);
 
-  const handleTransmissionChange = (transmission: string, checked: boolean) => {
-    const newTransmissions = checked
-      ? [...filters.selectedTransmissions, transmission]
-      : filters.selectedTransmissions.filter((t) => t !== transmission)
-    setFilters({ ...filters, selectedTransmissions: newTransmissions })
-  }
+  const selectedBrands = safeArr(filters.selectedBrands);
+  const selectedFuelTypes = safeArr(filters.selectedFuelTypes);
+  const selectedTransmissions = safeArr(filters.selectedTransmissions);
+  const selectedBodyTypes = safeArr(filters.selectedBodyTypes);
 
-  const handleBodyTypeChange = (bodyType: string, checked: boolean) => {
-    const newBodyTypes = checked
-      ? [...filters.selectedBodyTypes, bodyType]
-      : filters.selectedBodyTypes.filter((b) => b !== bodyType)
-    setFilters({ ...filters, selectedBodyTypes: newBodyTypes })
-  }
+  const toggle = (key: keyof FilterState, value: string, checked: boolean) => {
+    const current = safeArr((filters as any)[key]);
+    setFilters({ ...filters, [key]: checked ? [...current, value] : current.filter((v: string) => v !== value) });
+  };
 
-  const handleSegmentChange = (segment: string, checked: boolean) => {
-    const newSegments = checked
-      ? [...(filters.selectedSegments || []), segment]
-      : (filters.selectedSegments || []).filter((s) => s !== segment)
-    setFilters({ ...filters, selectedSegments: newSegments })
-  }
+  const reset = () => setFilters({ priceRange: [0, 50], selectedBrands: [], selectedFuelTypes: [], selectedTransmissions: [], selectedBodyTypes: [], selectedSegments: [], searchQuery: filters.searchQuery });
 
-  const clearAllFilters = () => {
-    setFilters({
-      priceRange: [0, 50],
-      selectedBrands: [],
-      selectedFuelTypes: [],
-      selectedTransmissions: [],
-      selectedBodyTypes: [],
-      selectedSegments: [],
-      searchQuery: filters.searchQuery, // Keep search query
-    })
-  }
-
-  const hasActiveFilters =
-    filters.priceRange[0] > 0 ||
-    filters.priceRange[1] < 50 ||
-    filters.selectedBrands.length > 0 ||
-    filters.selectedFuelTypes.length > 0 ||
-    filters.selectedTransmissions.length > 0 ||
-    filters.selectedBodyTypes.length > 0 ||
-    (filters.selectedSegments && filters.selectedSegments.length > 0)
+  const activeCount = selectedBrands.length + selectedFuelTypes.length + selectedTransmissions.length + selectedBodyTypes.length +
+    ((filters.priceRange?.[0] || 0) > 0 || (filters.priceRange?.[1] || 50) < 50 ? 1 : 0);
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Filters</CardTitle>
-          {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={clearAllFilters}>
-              <X className="w-4 h-4 mr-1" />
-              Clear All
-            </Button>
-          )}
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-sm">Filters</span>
+          {activeCount > 0 && <Badge className="bg-blue-600 text-white text-xs h-5 px-1.5">{activeCount}</Badge>}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Price Range */}
-        <div>
-          <Label className="text-base font-semibold mb-3 block">Price Range (₹ Lakh)</Label>
-          <div className="px-2">
-            <Slider
-              value={filters.priceRange}
-              onValueChange={(value) => setFilters({ ...filters, priceRange: value as [number, number] })}
-              max={50}
-              step={1}
-              className="mb-2"
-            />
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>₹{filters.priceRange[0]} L</span>
-              <span>₹{filters.priceRange[1]} L</span>
+        {activeCount > 0 && (
+          <button onClick={reset} className="text-xs text-blue-700 hover:text-blue-800 flex items-center gap-1 font-medium">
+            <X className="w-3 h-3" /> Clear all
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-0">
+        {/* Price */}
+        <Section title="Budget (Lakh)">
+          <Slider
+            min={0} max={50} step={1}
+            value={filters.priceRange || [0, 50]}
+            onValueChange={(v) => setFilters({ ...filters, priceRange: v as [number, number] })}
+            className="mt-3 mb-3"
+          />
+          <div className="flex justify-between text-xs font-semibold text-gray-700">
+            <span className="bg-gray-100 px-2 py-1 rounded">₹{filters.priceRange?.[0] || 0}L</span>
+            <span className="bg-gray-100 px-2 py-1 rounded">₹{filters.priceRange?.[1] || 50}L</span>
+          </div>
+        </Section>
+
+        {/* Brands */}
+        {brands.length > 0 && (
+          <Section title="Brand">
+            <div className="space-y-2 max-h-52 overflow-y-auto pr-1 custom-scrollbar">
+              {brands.filter((b) => b._count.vehicles > 0).map((b) => (
+                <div key={b.id} className="flex items-center justify-between gap-2 group">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id={`brand-${b.slug}`}
+                      checked={selectedBrands.includes(b.slug)}
+                      onCheckedChange={(c) => toggle("selectedBrands", b.slug, !!c)}
+                      className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                    />
+                    <Label htmlFor={`brand-${b.slug}`} className="text-sm cursor-pointer group-hover:text-blue-700 transition-colors">{b.name}</Label>
+                  </div>
+                  <span className="text-xs text-gray-400">{b._count.vehicles}</span>
+                </div>
+              ))}
             </div>
-          </div>
-        </div>
+          </Section>
+        )}
 
-        {/* Brand Filter */}
-        <div>
-          <Label className="text-base font-semibold mb-3 block">Brand ({brands.length})</Label>
-          <div className="max-h-48 overflow-y-auto space-y-2">
-            {brands.map((brand) => (
-              <div key={brand} className="flex items-center space-x-2">
-                <Checkbox
-                  id={brand}
-                  checked={filters.selectedBrands.includes(brand)}
-                  onCheckedChange={(checked) => handleBrandChange(brand, checked as boolean)}
-                />
-                <Label htmlFor={brand} className="text-sm cursor-pointer">
-                  {brand}
-                </Label>
-              </div>
+        {/* Body Type */}
+        <Section title="Body Type">
+          <div className="grid grid-cols-2 gap-1.5">
+            {BODY_TYPES.map((t) => (
+              <button
+                key={t}
+                onClick={() => toggle("selectedBodyTypes", t, !selectedBodyTypes.includes(t))}
+                className={`text-xs py-1.5 px-2 rounded-lg border transition-all ${
+                  selectedBodyTypes.includes(t)
+                    ? "border-blue-600 bg-blue-50 text-blue-700 font-semibold"
+                    : "border-gray-100 bg-gray-50 text-gray-600 hover:border-gray-200"
+                }`}
+              >
+                {t}
+              </button>
             ))}
           </div>
-        </div>
+        </Section>
 
-        {/* Body Type Filter */}
-        <div>
-          <Label className="text-base font-semibold mb-3 block">Body Type</Label>
-          <div className="space-y-2">
-            {bodyTypes.map((bodyType) => (
-              <div key={bodyType} className="flex items-center space-x-2">
-                <Checkbox
-                  id={bodyType}
-                  checked={filters.selectedBodyTypes.includes(bodyType)}
-                  onCheckedChange={(checked) => handleBodyTypeChange(bodyType, checked as boolean)}
-                />
-                <Label htmlFor={bodyType} className="text-sm cursor-pointer">
-                  {bodyType}
-                </Label>
-              </div>
+        {/* Fuel */}
+        <Section title="Fuel Type">
+          <div className="grid grid-cols-2 gap-1.5">
+            {FUEL_TYPES.map((f) => (
+              <button
+                key={f}
+                onClick={() => toggle("selectedFuelTypes", f, !selectedFuelTypes.includes(f))}
+                className={`text-xs py-1.5 px-2 rounded-lg border transition-all ${
+                  selectedFuelTypes.includes(f)
+                    ? "border-blue-600 bg-blue-50 text-blue-700 font-semibold"
+                    : "border-gray-100 bg-gray-50 text-gray-600 hover:border-gray-200"
+                }`}
+              >
+                {f}
+              </button>
             ))}
           </div>
-        </div>
+        </Section>
 
-        {/* Fuel Type Filter */}
-        <div>
-          <Label className="text-base font-semibold mb-3 block">Fuel Type</Label>
-          <div className="space-y-2">
-            {fuelTypes.map((fuel) => (
-              <div key={fuel} className="flex items-center space-x-2">
-                <Checkbox
-                  id={fuel}
-                  checked={filters.selectedFuelTypes.includes(fuel)}
-                  onCheckedChange={(checked) => handleFuelTypeChange(fuel, checked as boolean)}
-                />
-                <Label htmlFor={fuel} className="text-sm cursor-pointer">
-                  {fuel}
-                </Label>
-              </div>
+        {/* Transmission */}
+        <Section title="Transmission" defaultOpen={false}>
+          <div className="grid grid-cols-2 gap-1.5">
+            {TRANSMISSIONS.map((t) => (
+              <button
+                key={t}
+                onClick={() => toggle("selectedTransmissions", t, !selectedTransmissions.includes(t))}
+                className={`text-xs py-1.5 px-2 rounded-lg border transition-all ${
+                  selectedTransmissions.includes(t)
+                    ? "border-blue-600 bg-blue-50 text-blue-700 font-semibold"
+                    : "border-gray-100 bg-gray-50 text-gray-600 hover:border-gray-200"
+                }`}
+              >
+                {t}
+              </button>
             ))}
           </div>
-        </div>
-
-        {/* Transmission Filter */}
-        <div>
-          <Label className="text-base font-semibold mb-3 block">Transmission</Label>
-          <div className="space-y-2">
-            {transmissionTypes.map((transmission) => (
-              <div key={transmission} className="flex items-center space-x-2">
-                <Checkbox
-                  id={transmission}
-                  checked={filters.selectedTransmissions.includes(transmission)}
-                  onCheckedChange={(checked) => handleTransmissionChange(transmission, checked as boolean)}
-                />
-                <Label htmlFor={transmission} className="text-sm cursor-pointer">
-                  {transmission}
-                </Label>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Segment Filter */}
-        <div>
-          <Label className="text-base font-semibold mb-3 block">Segment</Label>
-          <div className="space-y-2">
-            {segments.map((segment) => (
-              <div key={segment} className="flex items-center space-x-2">
-                <Checkbox
-                  id={segment}
-                  checked={(filters.selectedSegments || []).includes(segment)}
-                  onCheckedChange={(checked) => handleSegmentChange(segment, checked as boolean)}
-                />
-                <Label htmlFor={segment} className="text-sm cursor-pointer">
-                  {segment}
-                </Label>
-              </div>
-            ))}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
+        </Section>
+      </div>
+    </div>
+  );
 }

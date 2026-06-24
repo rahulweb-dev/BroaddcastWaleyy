@@ -1,236 +1,311 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { Star, Fuel, Settings, Heart, ArrowUpDown } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { carsDatabase } from "@/lib/cars-database"
-import type { FilterState } from "@/app/cars/page"
+import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import {
+  ChevronLeft, ChevronRight,
+  Zap, Star,
+  Droplets, Wind, Gauge, BatteryCharging, Settings2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import type { FilterState } from "@/types/filters";
 
-interface CarGridProps {
-  filters: FilterState
+interface ApiVehicle {
+  id: string; name: string; slug: string; type: string;
+  priceMin: number | null; priceMax: number | null; priceDisplay: string | null;
+  bodyType: string | null; isPopular: boolean; isElectric: boolean; featured: boolean;
+  availabilityStatus: string;
+  brand: { name: string; slug: string; logo: string | null };
+  category: { name: string; slug: string };
+  images: Array<{ url: string }>;
+  variants: Array<{ fuelType: string | null; transmission: string | null; mileage: string | null; range: string | null; priceDisplay: string | null }>;
 }
 
-export function CarGrid({ filters }: CarGridProps) {
-  const [sortBy, setSortBy] = useState("popularity")
+interface CarGridProps {
+  filters: FilterState;
+  defaultType?: string;
+  defaultTypes?: string[];
+  electricOnly?: boolean;
+}
 
-  // Filter cars based on active filters including search
-  const filteredCars = useMemo(() => {
-    return carsDatabase.filter((car) => {
-      // Search filter
-      if (filters.searchQuery) {
-        const searchTerm = filters.searchQuery.toLowerCase()
-        const nameMatch = car.name.toLowerCase().includes(searchTerm)
-        const brandMatch = car.brand.toLowerCase().includes(searchTerm)
-        const modelMatch = car.model.toLowerCase().includes(searchTerm)
-        const keywordMatch = car.keywords.some(
-          (keyword) => keyword.toLowerCase().includes(searchTerm) || searchTerm.includes(keyword.toLowerCase()),
-        )
+function typeToPath(type: string) {
+  if (type === "BIKE" || type === "SCOOTER") return "bikes";
+  if (type === "EV") return "ev";
+  if (type === "COMMERCIAL") return "commercial";
+  return "cars";
+}
 
-        if (!nameMatch && !brandMatch && !modelMatch && !keywordMatch) {
-          return false
-        }
-      }
+function FuelIcon({ fuelType }: { fuelType: string }) {
+  const ft = fuelType.toLowerCase();
+  if (ft.includes("electric") || ft === "ev") return <Zap className="w-3 h-3 text-teal-500" />;
+  if (ft.includes("cng") || ft.includes("lpg")) return <Wind className="w-3 h-3 text-green-500" />;
+  return <Droplets className="w-3 h-3 text-blue-400" />;
+}
 
-      // Price filter
-      if (car.priceRange.min < filters.priceRange[0] || car.priceRange.min > filters.priceRange[1]) {
-        return false
-      }
+function VehicleCardSkeleton() {
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden animate-pulse">
+      <div className="h-48 bg-gray-100" />
+      <div className="p-4 space-y-2">
+        <div className="h-3 w-16 bg-gray-100 rounded" />
+        <div className="h-5 w-3/4 bg-gray-100 rounded" />
+        <div className="h-6 w-1/2 bg-gray-100 rounded" />
+        <div className="flex gap-2 mt-3">
+          <div className="h-8 flex-1 bg-gray-100 rounded" />
+          <div className="h-8 flex-1 bg-gray-100 rounded" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
-      // Brand filter
-      if (filters.selectedBrands.length > 0 && !filters.selectedBrands.includes(car.brand)) {
-        return false
-      }
+export function CarGrid({ filters, defaultType, defaultTypes, electricOnly }: CarGridProps) {
+  const [sortBy, setSortBy] = useState("newest");
+  const [vehicles, setVehicles] = useState<ApiVehicle[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const LIMIT = 18;
 
-      // Body type filter
-      if (filters.selectedBodyTypes.length > 0 && !filters.selectedBodyTypes.includes(car.bodyType)) {
-        return false
-      }
+  const fetchVehicles = useCallback(() => {
+    const params = new URLSearchParams();
+    if (filters.searchQuery) params.set("search", filters.searchQuery);
+    if (filters.selectedBrands?.length) params.set("brand", filters.selectedBrands[0]);
+    if (filters.selectedBodyTypes?.length) params.set("bodyType", filters.selectedBodyTypes[0]);
+    if (filters.selectedFuelTypes?.length) params.set("fuel", filters.selectedFuelTypes[0]);
+    if (filters.selectedTransmissions?.length) params.set("transmission", filters.selectedTransmissions[0]);
+    if (defaultTypes?.length) params.set("types", defaultTypes.join(","));
+    else if (defaultType) params.set("type", defaultType);
+    if (electricOnly) params.set("electric", "true");
 
-      // Fuel type filter
-      if (filters.selectedFuelTypes.length > 0) {
-        const carFuelTypes = car.variants.map((v) => v.fuelType)
-        if (!filters.selectedFuelTypes.some((fuel) => carFuelTypes.includes(fuel))) {
-          return false
-        }
-      }
+    const [pMin, pMax] = filters.priceRange || [0, 50];
+    if (pMin > 0) params.set("priceMin", String(pMin));
+    if (pMax < 50) params.set("priceMax", String(pMax));
 
-      // Transmission filter
-      if (filters.selectedTransmissions.length > 0) {
-        const carTransmissions = car.variants.map((v) => v.transmission)
-        if (!filters.selectedTransmissions.some((trans) => carTransmissions.includes(trans))) {
-          return false
-        }
-      }
+    params.set("sortBy", sortBy);
+    params.set("limit", String(LIMIT));
+    params.set("page", String(page));
 
-      // Segment filter
-      if (
-        filters.selectedSegments &&
-        filters.selectedSegments.length > 0 &&
-        !filters.selectedSegments.includes(car.segment)
-      ) {
-        return false
-      }
+    setLoading(true);
+    setError(false);
+    fetch(`/api/vehicles?${params}`)
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then((d) => {
+        setVehicles(d.vehicles || []);
+        setTotal(d.total || 0);
+        setTotalPages(d.pages || 1);
+      })
+      .catch(() => { setError(true); setVehicles([]); })
+      .finally(() => setLoading(false));
+  }, [filters, sortBy, page, defaultType, defaultTypes, electricOnly]);
 
-      return true
-    })
-  }, [filters])
+  useEffect(() => {
+    setPage(1);
+  }, [filters, sortBy, defaultType]);
 
-  // Sort filtered cars
-  const sortedCars = useMemo(() => {
-    const sorted = [...filteredCars]
-
-    switch (sortBy) {
-      case "price-low":
-        return sorted.sort((a, b) => a.priceRange.min - b.priceRange.min)
-      case "price-high":
-        return sorted.sort((a, b) => b.priceRange.min - a.priceRange.min)
-      case "rating":
-        return sorted.sort((a, b) => b.rating - a.rating)
-      case "mileage":
-        const getMileage = (car: any) => {
-          const mileageStr = car.variants[0]?.mileage || "0 kmpl"
-          return Number.parseFloat(mileageStr.replace(/[^\d.]/g, ""))
-        }
-        return sorted.sort((a, b) => getMileage(b) - getMileage(a))
-      case "popularity":
-      default:
-        return sorted.sort((a, b) => b.reviews - a.reviews)
-    }
-  }, [filteredCars, sortBy])
+  useEffect(() => {
+    fetchVehicles();
+  }, [fetchVehicles]);
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">{filters.searchQuery ? `Search Results` : "All Cars"}</h1>
-          <p className="text-gray-600">
-            {sortedCars.length} car{sortedCars.length !== 1 ? "s" : ""} found
-            {filteredCars.length !== carsDatabase.length && (
-              <span className="text-blue-600 ml-1">(filtered from {carsDatabase.length} total)</span>
-            )}
-          </p>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="popularity">Popularity</SelectItem>
-              <SelectItem value="price-low">Price: Low to High</SelectItem>
-              <SelectItem value="price-high">Price: High to Low</SelectItem>
-              <SelectItem value="rating">Rating</SelectItem>
-              <SelectItem value="mileage">Mileage</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Toolbar */}
+      <div className="flex items-center justify-between mb-5 gap-3">
+        <p className="text-sm text-gray-500">
+          {loading ? "Loading…" : <><span className="font-semibold text-gray-900">{total}</span> vehicles found</>}
+        </p>
+        <Select value={sortBy} onValueChange={(v) => { setSortBy(v); setPage(1); }}>
+          <SelectTrigger className="w-44 h-9 text-sm">
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Newest First</SelectItem>
+            <SelectItem value="popularity">Most Popular</SelectItem>
+            <SelectItem value="price-low">Price: Low to High</SelectItem>
+            <SelectItem value="price-high">Price: High to Low</SelectItem>
+            <SelectItem value="featured">Featured First</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {sortedCars.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-400 mb-4">
-            <Settings className="w-16 h-16 mx-auto mb-4" />
+      {/* Grid */}
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+          {Array.from({ length: 6 }).map((_, i) => <VehicleCardSkeleton key={i} />)}
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <p className="text-lg font-semibold text-gray-700 mb-2">Something went wrong</p>
+          <p className="text-sm text-gray-400 mb-4">Could not load vehicles</p>
+          <Button variant="outline" onClick={fetchVehicles}>Try again</Button>
+        </div>
+      ) : vehicles.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
-          <h3 className="text-xl font-semibold text-gray-600 mb-2">
-            {filters.searchQuery ? `No cars found for "${filters.searchQuery}"` : "No cars found"}
-          </h3>
-          <p className="text-gray-500">
-            {filters.searchQuery
-              ? "Try searching with different keywords or check the spelling"
-              : "Try adjusting your filters to see more results"}
-          </p>
+          <p className="text-lg font-semibold text-gray-700 mb-1">No vehicles found</p>
+          <p className="text-sm text-gray-400">Try adjusting your filters or search query</p>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedCars.map((car) => (
-              <Card key={car.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
-                <div className="relative">
-                  <Image
-                    src="/placeholder.svg?height=200&width=300"
-                    alt={car.name}
-                    width={300}
-                    height={200}
-                    className="w-full h-48 object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = "/placeholder.svg?height=200&width=300"
-                    }}
-                  />
-                  <div className="absolute top-2 right-2 flex space-x-2">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Heart className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <ArrowUpDown className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div className="absolute bottom-2 left-2 bg-white rounded-full px-2 py-1 flex items-center space-x-1">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="text-sm font-medium">{car.rating}</span>
-                    <span className="text-xs text-gray-500">({car.reviews})</span>
-                  </div>
-                  {car.isPopular && (
-                    <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-1 rounded text-xs font-medium">
-                      Popular
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+            {vehicles.map((v) => {
+              const variant = v.variants[0];
+              const img = v.images[0]?.url || "/placeholder.svg";
+              const href = `/${typeToPath(v.type)}/${v.brand.slug}/${v.slug}`;
+              const isEV = v.isElectric || v.type === "EV";
+
+              return (
+                <div
+                  key={v.id}
+                  className="group rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col"
+                >
+                  {/* Image */}
+                  <div className="relative h-48 bg-gray-50 overflow-hidden">
+                    <Image
+                      src={img} alt={v.name} fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                    <div className="absolute top-2 left-2 flex flex-wrap gap-1">
+                      {v.featured && (
+                        <Badge className="bg-amber-400 text-amber-900 border-0 text-xs">
+                          <Star className="w-2.5 h-2.5 mr-0.5 fill-current" />Featured
+                        </Badge>
+                      )}
+                      {v.isPopular && !v.featured && (
+                        <Badge className="bg-blue-600 text-white border-0 text-xs">Popular</Badge>
+                      )}
+                      {(v as any).isNew && (
+                        <Badge className="bg-emerald-500 text-white border-0 text-xs">New</Badge>
+                      )}
+                      {isEV && (
+                        <Badge className="bg-teal-500 text-white border-0 text-xs">
+                          <Zap className="w-2.5 h-2.5 mr-0.5" />EV
+                        </Badge>
+                      )}
                     </div>
-                  )}
+                    {v.availabilityStatus === "upcoming" && (
+                      <div className="absolute bottom-0 left-0 right-0 bg-amber-500/90 text-white text-center text-xs py-1 font-medium">
+                        Coming Soon
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-4 flex flex-col flex-1">
+                    <p className="text-xs text-gray-400 mb-0.5 font-medium">{v.brand.name}</p>
+                    <h3 className="font-bold text-gray-900 text-base leading-tight mb-1 group-hover:text-blue-700 transition-colors">
+                      {v.name}
+                    </h3>
+                    <p className="text-lg font-bold text-blue-700 mb-3">
+                      {v.priceDisplay || (v.priceMin ? `₹${v.priceMin} Lakh` : "Price on request")}
+                    </p>
+
+                    {/* Spec grid */}
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-gray-500 mb-4">
+                      {variant?.fuelType && (
+                        <div className="flex items-center gap-1.5">
+                          <FuelIcon fuelType={variant.fuelType} />
+                          <span>{variant.fuelType}</span>
+                        </div>
+                      )}
+                      {variant?.transmission && (
+                        <div className="flex items-center gap-1.5">
+                          <Settings2 className="w-3 h-3 text-gray-400" />
+                          <span>{variant.transmission}</span>
+                        </div>
+                      )}
+                      {(variant?.mileage || variant?.range) && (
+                        <div className="flex items-center gap-1.5 col-span-2">
+                          {isEV
+                            ? <BatteryCharging className="w-3 h-3 text-teal-500" />
+                            : <Gauge className="w-3 h-3 text-gray-400" />}
+                          <span>
+                            {isEV
+                              ? `Range: ${variant.range || "—"}`
+                              : `Mileage: ${variant.mileage || "—"}`}
+                          </span>
+                        </div>
+                      )}
+                      {(v.bodyType || v.category?.name) && (
+                        <span className="col-span-2 bg-slate-50 border border-gray-100 px-2 py-0.5 rounded-lg text-center text-gray-400">
+                          {v.bodyType || v.category.name}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2 mt-auto">
+                      <Link href={href} className="flex-1">
+                        <Button
+                          variant="outline"
+                          className="w-full h-9 text-sm border-blue-100 text-blue-700 hover:bg-blue-50 hover:border-blue-300"
+                        >
+                          View Details
+                        </Button>
+                      </Link>
+                      <Link href={`${href}#get-quote`} className="flex-1">
+                        <Button className="w-full h-9 text-sm bg-blue-700 hover:bg-blue-800 text-white">
+                          Get Quote
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
                 </div>
-
-                <CardContent className="p-4">
-                  <div className="mb-2">
-                    <span className="text-xs text-gray-500 uppercase tracking-wide">{car.brand}</span>
-                    <h3 className="font-semibold text-lg">{car.name}</h3>
-                    <span className="text-xs text-blue-600">{car.segment}</span>
-                  </div>
-
-                  <p className="text-red-600 font-bold text-xl mb-3">{car.priceDisplay}</p>
-
-                  <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mb-4">
-                    <div className="flex items-center space-x-1">
-                      <Fuel className="w-4 h-4" />
-                      <span>{car.variants[0]?.fuelType}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Settings className="w-4 h-4" />
-                      <span>{car.variants[0]?.transmission}</span>
-                    </div>
-                    <div>Mileage: {car.variants[0]?.mileage}</div>
-                    <div>{car.bodyType}</div>
-                  </div>
-
-                  <div className="flex space-x-2">
-                    <Button asChild variant="outline" className="flex-1">
-                      <Link href={`/cars/${car.id}`}>View Details</Link>
-                    </Button>
-                    <Button className="flex-1">Get Quote</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+              );
+            })}
           </div>
 
-          {sortedCars.length >= 12 && (
-            <div className="flex justify-center mt-8">
-              <Button variant="outline" size="lg">
-                Load More Cars
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-10">
+              <Button
+                variant="outline" size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="h-9 w-9 p-0"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                let p: number;
+                if (totalPages <= 7) p = i + 1;
+                else if (i === 0) p = 1;
+                else if (i === 6) p = totalPages;
+                else p = Math.min(Math.max(page - 2 + i, 2), totalPages - 1);
+                return (
+                  <Button
+                    key={p}
+                    variant={p === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setPage(p)}
+                    className={`h-9 w-9 p-0 ${p === page ? "bg-blue-700 hover:bg-blue-800 border-blue-700 text-white" : ""}`}
+                  >
+                    {p}
+                  </Button>
+                );
+              })}
+              <Button
+                variant="outline" size="sm"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="h-9 w-9 p-0"
+              >
+                <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
           )}
         </>
       )}
     </div>
-  )
+  );
 }

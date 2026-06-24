@@ -273,7 +273,7 @@ export function EMICalculator({ carPrice = 800000, carName }: EMICalculatorProps
               <div className="space-y-4">
                 <div className="text-center p-4 bg-white rounded-lg border">
                   <Label className="text-sm text-gray-600">Total Amount Payable</Label>
-                  <p className="text-xl font-semibold text-red-600">₹{emiResult.totalAmount.toLocaleString()}</p>
+                  <p className="text-xl font-semibold text-blue-700">₹{emiResult.totalAmount.toLocaleString()}</p>
                 </div>
 
                 <div className="text-center p-4 bg-white rounded-lg border">

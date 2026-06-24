@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { MapPin, CreditCard, Car } from "lucide-react"
+import { MapPin, CreditCard, TrendingUp } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export function BuyerTools() {
@@ -33,15 +33,15 @@ export function BuyerTools() {
         </Link>
 
         <Link
-          href="/used-cars"
+          href="/new-car-launches"
           className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-md transition-colors"
         >
           <div className="bg-gray-100 p-2 rounded-full">
-            <Car className="w-5 h-5 text-gray-600" />
+            <TrendingUp className="w-5 h-5 text-gray-600" />
           </div>
           <div>
-            <h3 className="font-medium">Used Cars</h3>
-            <p className="text-sm text-gray-500">Explore best priced used cars in good conditions near you</p>
+            <h3 className="font-medium">New Launches</h3>
+            <p className="text-sm text-gray-500">Explore the latest 2025–26 car models and upcoming launches</p>
           </div>
         </Link>
       </CardContent>

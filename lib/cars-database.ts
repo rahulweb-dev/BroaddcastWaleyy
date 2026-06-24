@@ -1,68 +1,71 @@
 export interface CarSpecifications {
-  engine: string
-  displacement: string
-  maxPower: string
-  maxTorque: string
-  fuelTankCapacity: string
+  engine?: string
+  battery?: string
+  range?: string
+  displacement?: string
+  maxPower?: string
+  maxTorque?: string
+  fuelTankCapacity?: string
+  chargingTime?: string
   bootSpace?: string
-  seatingCapacity: number
-  groundClearance: string
-  length: string
-  width: string
-  height: string
-  wheelbase: string
-  kerbWeight: string
-  gearbox: string
-  driveType: string
-  suspensionFront: string
-  suspensionRear: string
-  brakeFront: string
-  brakeRear: string
-  wheelSize: string
-  tyreSize: string
+  seatingCapacity?: number
+  groundClearance?: string
+  length?: string
+  width?: string
+  height?: string
+  wheelbase?: string
+  kerbWeight?: string
+  gearbox?: string
+  driveType?: string
+  suspensionFront?: string
+  suspensionRear?: string
+  brakeFront?: string
+  brakeRear?: string
+  wheelSize?: string
+  tyreSize?: string
 }
 
 export interface CarSafety {
-  airbags: string
-  abs: boolean
-  ebd: boolean
-  esp: boolean
-  hillAssist: boolean
-  tractionControl: boolean
-  isofix: boolean
-  reverseCamera: boolean
-  parkingSensors: string
+  airbags?: string
+  abs?: boolean
+  ebd?: boolean
+  esp?: boolean
+  hillAssist?: boolean
+  tractionControl?: boolean
+  isofix?: boolean
+  reverseCamera?: boolean
+  parkingSensors?: string
   ncapRating?: string
 }
 
 export interface CarFeatures {
-  airConditioning: string
-  powerSteering: boolean
-  powerWindows: string
-  centralLocking: boolean
-  keylessEntry: boolean
-  pushButtonStart: boolean
-  cruiseControl: boolean
-  musicSystem: string
-  bluetooth: boolean
-  usb: boolean
-  aux: boolean
-  steeringMountedControls: boolean
+  airConditioning?: string
+  powerSteering?: boolean
+  powerWindows?: string
+  centralLocking?: boolean
+  keylessEntry?: boolean
+  pushButtonStart?: boolean
+  cruiseControl?: boolean
+  musicSystem?: string
+  bluetooth?: boolean
+  usb?: boolean
+  aux?: boolean
+  steeringMountedControls?: boolean
   touchscreenSize?: string
-  navigation: boolean
-  androidAuto: boolean
-  appleCarPlay: boolean
-  wirelessCharging: boolean
+  navigation?: boolean
+  androidAuto?: boolean
+  appleCarPlay?: boolean
+  wirelessCharging?: boolean
   sunroof?: string
-  alloyWheels: boolean
-  fogLamps: boolean
-  drl: boolean
-  ledHeadlights: boolean
-  ledTaillights: boolean
-  electricOrvm: boolean
-  rainSensingWipers: boolean
-  rearWiper: boolean
-  rearDefogger: boolean
+  alloyWheels?: boolean
+  fogLamps?: boolean
+  drl?: boolean
+  ledHeadlights?: boolean
+  ledTaillights?: boolean
+  electricOrvm?: boolean
+  rainSensingWipers?: boolean
+  rearWiper?: boolean
+  rearDefogger?: boolean
 }
 
 export interface CarVariant {
@@ -82,10 +85,7 @@ export interface CarData {
   slug: string
   launchYear: number
   bodyType: string
-  priceRange: {
-    min: number
-    max: number
-  }
+  priceRange: { min: number; max: number }
   priceDisplay: string
   image: string
   images: string[]
@@ -96,7 +96,7 @@ export interface CarData {
   specifications: CarSpecifications
   safety: CarSafety
   features: CarFeatures
-  variants: CarVariant[]
+  variants: CarVariant[] // ALWAYS REQUIRED
   competitors: number[]
   keywords: string[]
   isPopular: boolean
@@ -104,7 +104,6 @@ export interface CarData {
   isElectric: boolean
   segment: string
 }
-
 
 
 
@@ -2429,6 +2428,277 @@ export const carsDatabase: CarData[] = [
     isElectric: false,
     segment: "B2-Hatchback",
   },
+
+  {
+    id: 21,
+    name: "Tata Nexon EV",
+    brand: "Tata",
+    model: "Nexon EV",
+    slug: "tata-nexon-ev",
+    launchYear: 2023,
+    bodyType: "SUV",
+    priceRange: { min: 14.49, max: 19.49 },
+    priceDisplay: "₹14.49 - 19.49 Lakh",
+    image: "/placeholder.svg?height=200&width=300",
+    images: [
+      "/placeholder.svg?height=400&width=600",
+      "/placeholder.svg?height=400&width=600",
+      "/placeholder.svg?height=400&width=600",
+      "/placeholder.svg?height=400&width=600",
+    ],
+    rating: 4.5,
+    reviews: 980,
+    overview:
+      "The Tata Nexon EV is one of India's best-selling electric SUVs, offering strong performance, long driving range, and modern features with zero emissions.",
+    keyHighlights: [
+      "Long driving range",
+      "Fast charging support",
+      "5-star safety rating",
+      "Low running cost",
+      "Connected car tech",
+    ],
+    specifications: {
+      battery: "40.5 kWh",
+      range: "465 km",
+      maxPower: "143 PS",
+      maxTorque: "215 Nm",
+      chargingTime: "6.5 hours (AC) / 56 min (DC fast)",
+      bootSpace: "350 L",
+      seatingCapacity: 5,
+      groundClearance: "190 mm",
+      length: "3994 mm",
+      width: "1811 mm",
+      height: "1616 mm",
+      wheelbase: "2498 mm",
+      kerbWeight: "1400 kg",
+      gearbox: "Automatic",
+      driveType: "FWD",
+    },
+    safety: {
+      airbags: "6 Airbags",
+      abs: true,
+      ebd: true,
+      esp: true,
+      hillAssist: true,
+      tractionControl: true,
+      isofix: true,
+      reverseCamera: true,
+      parkingSensors: "Front & Rear",
+      ncapRating: "5 Star",
+    },
+    features: {
+      airConditioning: "Automatic Climate Control",
+      powerSteering: true,
+      powerWindows: "Front & Rear",
+      centralLocking: true,
+      keylessEntry: true,
+      pushButtonStart: true,
+      cruiseControl: true,
+      touchscreenSize: "12.3 inch",
+      androidAuto: true,
+      appleCarPlay: true,
+      wirelessCharging: true,
+      sunroof: "Electric Sunroof",
+      alloyWheels: true,
+      ledHeadlights: true,
+      rearCamera: true,
+    },
+    variants: [
+      {
+        name: "Creative",
+        price: 14.49,
+        fuelType: "Electric",
+        transmission: "Automatic",
+        mileage: "465 km range",
+        available: true,
+      },
+      {
+        name: "Fearless",
+        price: 16.49,
+        fuelType: "Electric",
+        transmission: "Automatic",
+        mileage: "465 km range",
+        available: true,
+      },
+    ],
+    competitors: [7],
+    keywords: ["nexon ev", "tata", "electric suv", "ev", "long range"],
+    isPopular: true,
+    isUpcoming: false,
+    isElectric: true,
+    segment: "Electric SUV",
+  },
+  {
+    id: 22,
+    name: "MG ZS EV",
+    brand: "MG",
+    model: "ZS EV",
+    slug: "mg-zs-ev",
+    launchYear: 2023,
+    bodyType: "SUV",
+    priceRange: { min: 18.98, max: 25.20 },
+    priceDisplay: "₹18.98 - 25.20 Lakh",
+    image: "/placeholder.svg?height=200&width=300",
+    images: [
+      "/placeholder.svg?height=400&width=600",
+      "/placeholder.svg?height=400&width=600",
+      "/placeholder.svg?height=400&width=600",
+      "/placeholder.svg?height=400&width=600",
+    ],
+    rating: 4.4,
+    reviews: 620,
+    overview:
+      "The MG ZS EV is a premium electric SUV offering a long range, premium interiors, and advanced connected technology.",
+    keyHighlights: [
+      "Premium EV SUV",
+      "Long range battery",
+      "Panoramic sunroof",
+      "Advanced safety tech",
+      "Fast charging support",
+    ],
+    specifications: {
+      battery: "50.3 kWh",
+      range: "461 km",
+      maxPower: "176 PS",
+      maxTorque: "280 Nm",
+      chargingTime: "8.5 hours (AC) / 60 min (DC)",
+      bootSpace: "448 L",
+      seatingCapacity: 5,
+      groundClearance: "177 mm",
+      gearbox: "Automatic",
+      driveType: "FWD",
+    },
+    safety: {
+      airbags: "6 Airbags",
+      abs: true,
+      ebd: true,
+      esp: true,
+      hillAssist: true,
+      tractionControl: true,
+      isofix: true,
+      reverseCamera: true,
+      parkingSensors: "Front & Rear",
+      ncapRating: "5 Star",
+    },
+    features: {
+      airConditioning: "Automatic Climate Control",
+      touchscreenSize: "10.1 inch",
+      androidAuto: true,
+      appleCarPlay: true,
+      wirelessCharging: true,
+      sunroof: "Panoramic Sunroof",
+      alloyWheels: true,
+      ledHeadlights: true,
+    },
+    variants: [
+      {
+        name: "Excite",
+        price: 18.98,
+        fuelType: "Electric",
+        transmission: "Automatic",
+        mileage: "461 km range",
+        available: true,
+      },
+      {
+        name: "Exclusive",
+        price: 25.20,
+        fuelType: "Electric",
+        transmission: "Automatic",
+        mileage: "461 km range",
+        available: true,
+      },
+    ],
+    competitors: [21],
+    keywords: ["zs ev", "mg", "electric suv", "premium ev"],
+    isPopular: true,
+    isUpcoming: false,
+    isElectric: true,
+    segment: "Electric SUV",
+  },
+  {
+    id: 23,
+    name: "Tata Tiago EV",
+    brand: "Tata",
+    model: "Tiago EV",
+    slug: "tata-tiago-ev",
+    launchYear: 2023,
+    bodyType: "Hatchback",
+    priceRange: { min: 8.69, max: 12.04 },
+    priceDisplay: "₹8.69 - 12.04 Lakh",
+    image: "/placeholder.svg?height=200&width=300",
+    images: [
+      "/placeholder.svg?height=400&width=600",
+      "/placeholder.svg?height=400&width=600",
+      "/placeholder.svg?height=400&width=600",
+      "/placeholder.svg?height=400&width=600",
+    ],
+    rating: 4.3,
+    reviews: 540,
+    overview:
+      "The Tata Tiago EV is India's most affordable electric hatchback offering a practical driving range and low running costs.",
+    keyHighlights: [
+      "Affordable EV",
+      "Compact city car",
+      "Low running cost",
+      "Multiple battery options",
+      "Fast charging support",
+    ],
+    specifications: {
+      battery: "24 kWh",
+      range: "315 km",
+      maxPower: "74 PS",
+      maxTorque: "114 Nm",
+      chargingTime: "5.7 hours (AC)",
+      bootSpace: "240 L",
+      seatingCapacity: 5,
+      gearbox: "Automatic",
+      driveType: "FWD",
+    },
+    safety: {
+      airbags: "2 Airbags",
+      abs: true,
+      ebd: true,
+      esp: false,
+      hillAssist: false,
+      tractionControl: false,
+      isofix: true,
+      reverseCamera: true,
+      parkingSensors: "Rear",
+      ncapRating: "4 Star",
+    },
+    features: {
+      airConditioning: "Automatic AC",
+      touchscreenSize: "7 inch",
+      androidAuto: true,
+      appleCarPlay: true,
+      alloyWheels: true,
+    },
+    variants: [
+      {
+        name: "XE",
+        price: 8.69,
+        fuelType: "Electric",
+        transmission: "Automatic",
+        mileage: "315 km range",
+        available: true,
+      },
+      {
+        name: "XZ+",
+        price: 12.04,
+        fuelType: "Electric",
+        transmission: "Automatic",
+        mileage: "315 km range",
+        available: true,
+      },
+    ],
+    competitors: [21],
+    keywords: ["tiago ev", "tata", "electric hatchback", "budget ev"],
+    isPopular: true,
+    isUpcoming: false,
+    isElectric: true,
+    segment: "Electric Hatchback",
+  }
+
 ]
 
 // Search and filter functions
@@ -2507,11 +2777,14 @@ export function getCarById(id: number): CarData | undefined {
   return carsDatabase.find((car) => car.id === id)
 }
 
-export function getCompetitors(carId: number): CarData[] {
+
+export const getCompetitors = (carId: number): CarData[] => {
   const car = getCarById(carId)
   if (!car) return []
 
-  return car.competitors.map((id) => getCarById(id)).filter(Boolean) as CarData[]
+  return (car.competitors || [])
+    .map((id) => getCarById(id))
+    .filter(Boolean) as CarData[]
 }
 
 // Brand list for filters
@@ -2522,12 +2795,19 @@ export const bodyTypes = Array.from(new Set(carsDatabase.map((car) => car.bodyTy
 
 // Fuel types for filters
 export const fuelTypes = Array.from(
-  new Set(carsDatabase.flatMap((car) => car.variants.map((variant) => variant.fuelType))),
+  new Set(
+    carsDatabase.flatMap((car) =>
+      (car.variants || []).map((variant) => variant.fuelType)
+    )
+  )
 ).sort()
-
 // Transmission types for filters
 export const transmissionTypes = Array.from(
-  new Set(carsDatabase.flatMap((car) => car.variants.map((variant) => variant.transmission))),
+  new Set(
+    carsDatabase.flatMap((car) =>
+      (car.variants || []).map((variant) => variant.transmission)
+    )
+  )
 ).sort()
 
 // Segments for filters
